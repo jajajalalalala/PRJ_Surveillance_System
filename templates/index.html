@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* {
+  box-sizing: border-box;
+}
+
+.img-container {
+  float: left;
+  width: 30%;
+  padding: 5px;
+}
+
+.clearfix::after {
+  content: "";
+  clear: both;
+  display: table;
+}
+</style>
+</head>
+<body>
+
+<h1>Multi-Raspberry Pi Survilliance System</h1>
+
+<div class="clearfix">
+  <div class="img-container">
+        <p align="center">Live stream 1</p>
+        <img src="{{ url_for('video_feed', feed_type='camera', device=0) }}" class="center" style="border:1px solid #a52828;width:100%" alt="Live Stream 1">
+  </div>
+  <div class="img-container">
+        <p align="center">Live stream 2</p>
+        <img src="{{ url_for('video_feed', feed_type='camera', device=1) }}" class="center" style="border:1px solid #ca1616;width:100%" alt="Live Stream 2">
+  </div>
+</div>
+
+</body>
+</html>
