@@ -21,16 +21,21 @@
 </head>
 <body>
 
-<h1>Multi-Raspberry Pi Survilliance System</h1>
+<h1 style="text-align: center">Multi-Raspberry Pi Survilliance System</h1>
 
 <div class="clearfix">
-  <div class="img-container">
-        <p align="center">Live stream 1</p>
-        <img src="{{ url_for('video_feed', feed_type='camera', device=0) }}" class="center" style="border:1px solid #a52828;width:100%" alt="Live Stream 1">
+
+  <div class="img-container" >
+        <p align="center">Camera Stream 1</p>
+        <img src="{{ url_for('video_feed', device=0) }}" class="center" style="border:1px solid #a52828;width:100%" alt="Camera Stream 1">
   </div>
   <div class="img-container">
-        <p align="center">Live stream 2</p>
-        <img src="{{ url_for('video_feed', feed_type='camera', device=1) }}" class="center" style="border:1px solid #ca1616;width:100%" alt="Live Stream 2">
+        <p align="center">Camera Stream 2</p>
+        <img src="{{ url_for('video_feed', device=2) }}" class="center" style="border:1px solid #a52828;width:100%" alt="Camera Stream 2">
+  </div>
+  <div class="img-container">
+        <p align="center">Camera Stream 3</p>
+        <img src="{{ url_for('video_feed', device=1) }}" class="center" style="border:1px solid #ca1616;width:100%" alt="Camera Stream 3">
   </div>
 </div>
 

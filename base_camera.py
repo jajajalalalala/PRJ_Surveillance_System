@@ -1,7 +1,7 @@
 import time
 import threading
 import imagezmq
-
+from client_init import Client
 try:
     from greenlet import getcurrent as get_ident
 except ImportError:
@@ -60,65 +60,88 @@ class BaseCamera:
     first_frame = None
     event = {}
 
-    def __init__(self, feed_type, device, port_list):
+    def __init__(self, device, port_list):
         """Start the background camera thread if it isn't running yet."""
-        self.unique_name = (feed_type, device)
-        BaseCamera.event[self.unique_name] = CameraEvent()
+        BaseCamera.event[device] = CameraEvent()
 
-        if self.unique_name not in BaseCamera.threads:
-            BaseCamera.threads[self.unique_name] = None
-        if BaseCamera.threads[self.unique_name] is None:
-            BaseCamera.last_access[self.unique_name] = time.time()
+        if device not in BaseCamera.threads:
+            BaseCamera.threads[device] = None
+        if BaseCamera.threads[device] is None:
+            BaseCamera.last_access[device] = time.time()
 
             # start background frame thread
-            BaseCamera.threads[self.unique_name] = threading.Thread(target=self._thread,
-                                                                    args=(self.unique_name, port_list))
-            BaseCamera.threads[self.unique_name].start()
+            BaseCamera.threads[device] = threading.Thread(target=self._thread,
+                                                                    args=(device, port_list))
+            BaseCamera.threads[device].start()
 
             # wait until frames are available
-            while self.get_frame(self.unique_name) is None:
+            while self.get_frame(device) is None:
                 time.sleep(0)
 
+
     @classmethod
-    def get_frame(cls, unique_name):
+    def get_frame(cls, device):
         """Return the current camera frame."""
-        BaseCamera.last_access[unique_name] = time.time()
+        BaseCamera.last_access[device] = time.time()
 
         # wait for a signal from the camera thread
-        BaseCamera.event[unique_name].wait()
-        BaseCamera.event[unique_name].clear()
-        return BaseCamera.frame[unique_name]
-
-    @staticmethod
-    def frames():
-        """"Generator that returns frames from the camera."""
-        raise RuntimeError('Must be implemented by subclasses')
-
-    @staticmethod
-    def server_frames(image_hub):
-        """"Generator that returns frames from the camera."""
-        raise RuntimeError('Must be implemented by subclasses')
+        BaseCamera.event[device].wait()
+        BaseCamera.event[device].clear()
+        return BaseCamera.frame[device]
+    #
+    # @staticmethod
+    # def frames():
+    #     """"Generator that returns frames from the camera."""
+    #     raise RuntimeError('Must be implemented by subclasses')
+    #
+    # @staticmethod
+    # def server_frames(image_hub):
+    #     """"Generator that returns frames from the camera."""
+    #     raise RuntimeError('Must be implemented by subclasses')
+    # @staticmethod
+    # def frames():
+    #     """"Generator that returns frames from the camera."""
+    #     raise RuntimeError('Must be implemented by subclasses')
+    #
+    # @staticmethod
+    # def server_frames(image_hub):
+    #     """"Generator that returns frames from the camera."""
+    #     raise RuntimeError('Must be implemented by subclasses')
 
     @classmethod
-    def server_thread(cls, unique_name, port):
-        device = unique_name[1]
+    def server_thread(cls, device, port):
 
         image_hub = imagezmq.ImageHub(open_port='tcp://*:{}'.format(port))
 
         frames_iterator = cls.server_frames(image_hub)
+
+        switcher = {
+            "cam1": "192.168.0.172",
+            "cam2": "192.168.0.145",
+            "cam3": "192.168.0.144"
+
+        }
+
         try:
             for cam_id, frame in frames_iterator:
                 #set the current frame
-                BaseCamera.frame[unique_name] = cam_id, frame
-                BaseCamera.event[unique_name].set()  # send signal to clients
+                BaseCamera.frame[device] = cam_id, frame
+                BaseCamera.event[device].set()  # send signal to clients
                 time.sleep(0)
 
-                #If we don't get frame for 5 seconds, then close the connection
-                if time.time() - BaseCamera.last_access[unique_name] > 5:
+                #If we don't get frame for 10 seconds, then close the connection
+                if time.time() - BaseCamera.last_access[device] > 10:
+
+                    ip = switcher(cam_id, "Invalid IP")
+
                     frames_iterator.close()
                     image_hub.zmq_socket.close()
                     print('Closing server socket at port {}.'.format(port))
-                    print('Stopping server thread for device {} due to inactivity.'.format(device))
+
+                    #When Camera is invalid, restart the camera
+                    client = Client(ip)
+                    client.restart()
+                    print('Restarting server thread for device {} due to inactivity.'.format(device))
                     pass
         except Exception as e:
             frames_iterator.close()
@@ -129,12 +152,10 @@ class BaseCamera:
 
     @classmethod
     #A class method indicates a thread
-    def _thread(cls, unique_name, port_list):
-        #define the feed type and host
-        feed_type, device = unique_name
+    def _thread(cls, device, port_list):
         port = port_list[int(device)]
         print('Starting server thread for device {} at port {}.'.format(device, port))
-        cls.server_thread(unique_name, port)
+        cls.server_thread(device, port)
 
 
-        BaseCamera.threads[unique_name] = None
+        BaseCamera.threads[device] = None
