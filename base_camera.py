@@ -1,6 +1,7 @@
 import time
 import threading
 import imagezmq
+from notifier import RPI_Notifier
 from client_init import Client
 try:
     from greenlet import getcurrent as get_ident
@@ -138,14 +139,18 @@ class BaseCamera:
                     image_hub.zmq_socket.close()
                     print('Closing server socket at port {}.'.format(port))
 
+                    RPI_Notifier.telegram_bot_sendText("Camera {} is down, please check the camera ".format(cam_id))
                     #When Camera is invalid, restart the camera
                     client = Client(ip)
                     client.restart()
+                    # Notify the user restart the camera
+                    RPI_Notifier.telegram_bot_sendText("Cannot get message from {}, please check the PIR status".format(cam_id))
                     print('Restarting server thread for device {} due to inactivity.'.format(device))
                     pass
         except Exception as e:
             frames_iterator.close()
             image_hub.zmq_socket.close()
+            RPI_Notifier.telegram_bot_sendText("Camera {} is down, please check the camera ".format(cam_id))
             print('Closing server socket at port {}.'.format(port))
             print('Stopping server thread for device {} due to error.'.format(device))
             print(e)

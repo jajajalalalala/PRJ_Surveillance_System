@@ -17,27 +17,82 @@
   clear: both;
   display: table;
 }
+#imgdiv{
+            width: 500px;
+            margin:50px auto;
+        }
+
+        #imgdiv img{
+            width: 300px;
+            margin:0 100px;
+        }
+
+        #bigimg{
+            width: 100%;
+            height: 100%;
+            position: fixed;
+            background: rgba(0,0,0,.3);
+            top: 0;
+            display: none;
+        }
+
+        #bigimg img{
+            width: 1000px;
+            margin:auto;
+            position: fixed;
+            left:0;
+            right:0;
+            top: 80px;
+            cursor: pointer;
+        }
 </style>
 </head>
 <body>
 
-<h1 style="text-align: center">Multi-Raspberry Pi Survilliance System</h1>
+<h1 style="text-align: center">Raspberry Pi Survilliance System</h1>
 
 <div class="clearfix">
 
-  <div class="img-container" >
+
+  <!-- First Camera -->
+  <div class="img-container" onclick="imgbig(1);">
         <p align="center">Camera Stream 1</p>
-        <img src="{{ url_for('video_feed', device=0) }}" class="center" style="border:1px solid #a52828;width:100%" alt="Camera Stream 1">
+        <img src="{{ url_for('video_feed', device=0) }}" class="center" style="border:1px solid #a52828;width:100%" alt="Camera Stream 1" id="imgsrc1">
+
+
   </div>
-  <div class="img-container">
+  <div id="bigimg" onclick="closeimg();"></div>
+
+
+  <!-- Second Camera -->
+  <div class="img-container" onclick="imgbig(2);">
         <p align="center">Camera Stream 2</p>
-        <img src="{{ url_for('video_feed', device=2) }}" class="center" style="border:1px solid #a52828;width:100%" alt="Camera Stream 2">
+        <img src="{{ url_for('video_feed', device=2) }}" class="center" style="border:1px solid #a52828;width:100%" alt="Camera Stream 2" id="imgsrc2">
   </div>
-  <div class="img-container">
+    <div id="bigimg" onclick="closeimg();"></div>
+
+
+  <!-- Third Camera -->
+  <div class="img-container" onclick="imgbig(3);">
         <p align="center">Camera Stream 3</p>
-        <img src="{{ url_for('video_feed', device=1) }}" class="center" style="border:1px solid #ca1616;width:100%" alt="Camera Stream 3">
+        <img src="{{ url_for('video_feed', device=1) }}" class="center" style="border:1px solid #ca1616;width:100%" alt="Camera Stream 3" id="imgsrc3">
   </div>
+    <div id="bigimg" onclick="closeimg();"></div>
 </div>
 
 </body>
+<!-- JS -->
+<script src="https://www.jq22.com/jquery/jquery-3.3.1.js"></script>
+<script>
+function imgbig(i) {
+    var imgsrc = $('#imgsrc' + i).attr('src');
+    $("#bigimg").css("display","block");
+    $("#bigimg").html("<img src="+imgsrc +" />");
+}
+
+function closeimg() {
+    $("#bigimg").css("display","none");
+}
+
+</script>
 </html>

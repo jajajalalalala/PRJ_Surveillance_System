@@ -1,16 +1,20 @@
-#inspired by https://github.com/LeonLok/Multi-Camera-Live-Object-Tracking
+# inspired by https://github.com/LeonLok/Multi-Camera-Live-Object-Tracking
 from base_camera import BaseCamera
 import time
 import cv2
 from lib_vibe.py_vibe import ViBe
+from notifier import RPI_Notifier
+from threading import Thread
+import time, threading
+from PIL import Image
+isAvailable = [True, True, True]
 
-#Camera is the child of BaseCamera
+
+# Camera is the child of BaseCamera
 class Camera(BaseCamera):
 
     def __init__(self, device, port_list):
         super(Camera, self).__init__(device, port_list)
-
-
 
     @staticmethod
     def server_frames(image_hub):
@@ -18,13 +22,38 @@ class Camera(BaseCamera):
         total_time = 0
         vibe = ViBe()
 
+
+
+        # Let a availability thread sleep for 5 minutes before sending the next frame
+        def changeAvailability(i):
+            time.sleep(300)
+            isAvailable[i] = True
+
+        # cooler
+        def cooler(i):
+            global isAvailable
+            if not isAvailable[i]:
+                t = threading.Thread(target=changeAvailability, args=(i,))
+                t.start()
+
+        #Send notification to the phone telegram
+        def send_message(message, image):
+            thr = Thread(target=RPI_Notifier.telegram_bot_sendText, args=[message])
+            thr.start()
+            thr.join()
+
+            thr2 = Thread(target=RPI_Notifier.telegram_bot_sendImage, args=[image])
+            thr2.start()
+            thr2.join()
+            return "OK"
+
         # cam_id, old_frame = image_hub.recv_image()
         # image_hub.send_reply(b'OK')  # this is needed for the stream to work with REQ/REP pattern
         #
         # cam_id, new_frame = image_hub.recv_image()
         # image_hub.send_reply(b'OK')
 
-        #Initialize the Vibe background
+        # Initialize the Vibe background
         cam_id, frame = image_hub.recv_image()
         image_hub.send_reply(b'OK')
         time_start = time.time()
@@ -36,10 +65,9 @@ class Camera(BaseCamera):
         old_segmentation_map = vibe.Segmentation(gray)
         num_frames += 1
 
-
         while True:  # main loop
 
-            #Uncomment to disable Vibe motion detection
+            # Uncomment to disable Vibe motion detection
 
             cam_id, frame = image_hub.recv_image()
             image_hub.send_reply(b'OK')
@@ -55,25 +83,38 @@ class Camera(BaseCamera):
             vibe.Update(gray, old_segmentation_map)
             blur = cv2.GaussianBlur(difference, (21, 21), 0)
 
-
             _, threshold = cv2.threshold(blur, 20, 255, cv2.THRESH_BINARY)
             dilated = cv2.dilate(threshold, None, iterations=3)
             contours, _ = cv2.findContours(dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            #cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
+            # cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
 
             for i in contours:
-                if cv2.contourArea(i) < 1000:
-                        continue
+                if cv2.contourArea(i) <1000:
+                    continue
 
                 (x, y, z, v) = cv2.boundingRect(i)
+
+
+                # Send notification to telegram when a motion is detected and send the motion
+                cam_index = int(cam_id[-1]) - 1
+                if isAvailable[cam_index]:
+
+                    # if the parameter isAvailable is true, send notification.
+
+                    isAvailable[cam_index] = False
+                    cooler(cam_index)
+                    cv2.rectangle(frame, (x, y), (x + z, y + v), (0, 255, 0), 2)
+                    Image.fromarray(frame, "RGB").save("frame.jpg")
+                    send_message("motion detected on camera {}".format(cam_id), "frame.jpg")
+                #
+
+
                 cv2.rectangle(frame, (x, y), (x + z, y + v), (0, 255, 0), 2)
             num_frames += 1
 
+            # Adding motion detection
 
-
-            #Adding motion detection
-
-            #Uncomment to disable background different motion detection
+            # Uncomment to disable background different motion detection
             #
             # difference = cv2.absdiff(old_frame, new_frame)
             # gray = cv2.cvtColor(difference, cv2.COLOR_BGR2GRAY)
@@ -109,7 +150,6 @@ class Camera(BaseCamera):
             # image_hub.send_reply(b'OK')  # this is needed for the stream to work with REQ/REP pattern
             # num_frames += 1
 
-
             # Uncomment to start without motion detection
             # cam_id, result= image_hub.recv_image()
             # image_hub.send_reply(b'OK')  # this is needed for the stream to work with REQ/REP pattern
@@ -120,4 +160,4 @@ class Camera(BaseCamera):
             # total_time += time_now - time_start
             # fps = num_frames / total_time
 
-            yield cam_id,  frame
+            yield cam_id, frame
