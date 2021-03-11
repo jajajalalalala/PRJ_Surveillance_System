@@ -1,7 +1,7 @@
 import time
 import threading
 import imagezmq
-from notifier import RPI_Notifier
+import notifier
 from client_init import Client
 try:
     from greenlet import getcurrent as get_ident
@@ -89,25 +89,7 @@ class BaseCamera:
         BaseCamera.event[device].wait()
         BaseCamera.event[device].clear()
         return BaseCamera.frame[device]
-    #
-    # @staticmethod
-    # def frames():
-    #     """"Generator that returns frames from the camera."""
-    #     raise RuntimeError('Must be implemented by subclasses')
-    #
-    # @staticmethod
-    # def server_frames(image_hub):
-    #     """"Generator that returns frames from the camera."""
-    #     raise RuntimeError('Must be implemented by subclasses')
-    # @staticmethod
-    # def frames():
-    #     """"Generator that returns frames from the camera."""
-    #     raise RuntimeError('Must be implemented by subclasses')
-    #
-    # @staticmethod
-    # def server_frames(image_hub):
-    #     """"Generator that returns frames from the camera."""
-    #     raise RuntimeError('Must be implemented by subclasses')
+
 
     @classmethod
     def server_thread(cls, device, port):
@@ -132,25 +114,27 @@ class BaseCamera:
 
                 #If we don't get frame for 10 seconds, then close the connection
                 if time.time() - BaseCamera.last_access[device] > 10:
-
-                    ip = switcher(cam_id, "Invalid IP")
+                    ip = switcher.get(cam_id, "Invalid IP")
 
                     frames_iterator.close()
                     image_hub.zmq_socket.close()
                     print('Closing server socket at port {}.'.format(port))
 
-                    RPI_Notifier.telegram_bot_sendText("Camera {} is down, please check the camera ".format(cam_id))
+                    notifier.telegram_bot_sendText("Camera {} is down, please check the camera.".format(cam_id))
                     #When Camera is invalid, restart the camera
                     client = Client(ip)
                     client.restart()
                     # Notify the user restart the camera
-                    RPI_Notifier.telegram_bot_sendText("Cannot get message from {}, please check the PIR status".format(cam_id))
+                    notifier.telegram_bot_sendText("Camera {} has restarted.".format(cam_id))
                     print('Restarting server thread for device {} due to inactivity.'.format(device))
                     pass
         except Exception as e:
+
             frames_iterator.close()
             image_hub.zmq_socket.close()
-            RPI_Notifier.telegram_bot_sendText("Camera {} is down, please check the camera ".format(cam_id))
+            notifier.telegram_bot_sendText("Camera is down, please check the camera ")
+
+            notifier.telegram_bot_sendText("Camera has started.")
             print('Closing server socket at port {}.'.format(port))
             print('Stopping server thread for device {} due to error.'.format(device))
             print(e)

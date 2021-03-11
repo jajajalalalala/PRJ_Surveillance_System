@@ -1,85 +1,171 @@
 <!DOCTYPE html>
-<html>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-BmbxuPwQa2lc/FVzBcNJ7UAyJxM6wuqIj61tLrc4wSX0szH/Ev+nYRRuWlolflfl" crossorigin="anonymous"><html>
 <head>
 <style>
+
+html, body{
+    background-color: #878787;
+}
 * {
   box-sizing: border-box;
+}
+.header{
+    padding: 50px;
+    text-align: center;
+    background: #878787;
+    color: white;
+}
+
+.time_field{
+    width: 400px;
+                height: 50px;
+                font-size: 25px;
+                text-align: center;
+                line-height: 50px;
+                border: 3px solid white;
+    color: white;
+
+}
+
+.sub_header{
+    text-align: center;
+    background: #878787;
+    color: white;
+    padding:10px;
+   font-size: 25px;
+
 }
 
 .img-container {
   float: left;
-  width: 30%;
-  padding: 5px;
+  width: 33%;
+  padding: 1px;
+    border: 3px solid #444444;
+
 }
 
 .clearfix::after {
   content: "";
   clear: both;
   display: table;
+    margin-left: auto;
+  margin-right: auto;
+
+
 }
-#imgdiv{
-            width: 500px;
-            margin:50px auto;
-        }
+.text-center {
+  text-align: center;
+    padding: 10px;
+}
 
-        #imgdiv img{
-            width: 300px;
-            margin:0 100px;
-        }
 
-        #bigimg{
-            width: 100%;
-            height: 100%;
-            position: fixed;
-            background: rgba(0,0,0,.3);
-            top: 0;
-            display: none;
-        }
+#imgdiv img{
+    width: 300px;
+    margin:0 100px;
+    border: 3px solid #444444;
+}
 
-        #bigimg img{
-            width: 1000px;
-            margin:auto;
-            position: fixed;
-            left:0;
-            right:0;
-            top: 80px;
-            cursor: pointer;
-        }
+#bigimg{
+    width: 100%;
+    height: 100%;
+    position: fixed;
+    background: rgba(0,0,0,.3);
+    top: 0;
+    display: none;
+}
+
+#bigimg img {
+    width: 1000px;
+    margin: auto;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 80px;
+    cursor: pointer;
+    border: 10px solid azure;
+}
+
+
+
+button{
+    position:absolute;
+    bottom: 5%;
+    right:50%;
+}
+
+li{
+    color: white;
+}
+
+
+
 </style>
 </head>
 <body>
+<div style="background: #878787">
 
-<h1 style="text-align: center">Raspberry Pi Survilliance System</h1>
+<h1 class="header">Home Surveilliance System</h1>
 
+
+<h2 >
+    <div id="times" class="time_field" style=" right:50%"></div>
+</h2>
 <div class="clearfix">
 
 
+
   <!-- First Camera -->
-  <div class="img-container" onclick="imgbig(1);">
-        <p align="center">Camera Stream 1</p>
-        <img src="{{ url_for('video_feed', device=0) }}" class="center" style="border:1px solid #a52828;width:100%" alt="Camera Stream 1" id="imgsrc1">
-
-
+  <div class="img-container" >
+        <p class="sub_header">Camera 1</p>
+        <img onclick="imgbig(1);" src="{{ url_for('video_feed', device=0) }}" class="center" style="border:1px solid #444444;width:100%" alt="Camera Stream 1" id="imgsrc1">
+{#        <div>#}
+{#           <ul>#}
+{#               <li ><p href="{{ url_for('index.get_start_time', device=0 )}}"></p></li>#}
+{#               <li>Number of motion detected: </li>#}
+{#               <li>Notification sent: </li>#}
+{#           </ul>#}
+{#        </div>#}
   </div>
   <div id="bigimg" onclick="closeimg();"></div>
 
 
   <!-- Second Camera -->
-  <div class="img-container" onclick="imgbig(2);">
-        <p align="center">Camera Stream 2</p>
-        <img src="{{ url_for('video_feed', device=2) }}" class="center" style="border:1px solid #a52828;width:100%" alt="Camera Stream 2" id="imgsrc2">
+  <div class="img-container" >
+        <p class="sub_header">Camera 2</p>
+        <img onclick="imgbig(2);" src="{{ url_for('video_feed', device=2) }}" class="center" style="border:1px solid #444444;width:100%" alt="Camera Stream 2" id="imgsrc2">
   </div>
     <div id="bigimg" onclick="closeimg();"></div>
 
 
   <!-- Third Camera -->
-  <div class="img-container" onclick="imgbig(3);">
-        <p align="center">Camera Stream 3</p>
-        <img src="{{ url_for('video_feed', device=1) }}" class="center" style="border:1px solid #ca1616;width:100%" alt="Camera Stream 3" id="imgsrc3">
+  <div class="img-container" >
+        <p class="sub_header">Camera 3</p>
+        <img onclick="imgbig(3);" src="{{ url_for('video_feed', device=1) }}" class="center" style="border:1px solid #444444;width:100%" alt="Camera Stream 3" id="imgsrc3">
   </div>
     <div id="bigimg" onclick="closeimg();"></div>
+
+
+
+    <div class="clearfix">
+
+
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<lottie-player src="https://assets2.lottiefiles.com/packages/lf20_GVLlF8.json"  background="transparent"  speed="1"  style="width: 300px; height: 300px;"  loop  autoplay></lottie-player>
+
 </div>
 
+
+
+
+
+
+<div class="clearfix">
+<div class="text-center">
+    <button type="button" class="btn btn-primary"  onClick="window.location.reload();">Reload the Page</button>
+</div>
+</div>
+
+</div>
 </body>
 <!-- JS -->
 <script src="https://www.jq22.com/jquery/jquery-3.3.1.js"></script>
@@ -94,5 +180,17 @@ function closeimg() {
     $("#bigimg").css("display","none");
 }
 
+<!--get current time-->
+function getDate(){
+
+                var date = new Date();
+
+                var date1 = date.toLocaleString();
+
+                var div1 = document.getElementById("times");
+
+                div1.innerHTML = date1;
+            }
+ setInterval("getDate()",1000)
 </script>
 </html>

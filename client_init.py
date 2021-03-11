@@ -1,6 +1,6 @@
 import paramiko
 import csv
-import time
+from datetime import  datetime
 #Class to start a server
 class Client:
     password = 'pi'
@@ -10,7 +10,9 @@ class Client:
 
     def __init__(self, host):
         self.hostname = host
+        self.start_time = 0
 
+    # Get the Ip of Camera
     def get_cam_ip(self, cam_name):
         switcher = {
             "cam1": "192.168.0.172",
@@ -20,28 +22,21 @@ class Client:
         }
         return switcher.get(cam_name, "Invalid")
 
-    #id specify the
+    #Start the client by execute an bash file
     def start(self):
         print ("start client")
+        self.start_time = datetime.now()
+        print(self.start_time)
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         client.connect(hostname=self.hostname, username=self.username, password=self.password)
-        # bash_script = open('resource/client_{}.sh'.format(id)).read()
-        #
-        # stdin, stdout, stderr = client.exec_command(bash_script)
-
         client.exec_command('/home/pi/PRJ/Client/client.sh')
-
-
         # close the connection
         client.close()
 
-    #restart the client
-    def restart(self):
-        print("restart client")
-        self.stop()
-        self.start()
 
+
+    # Stop an camera by killing the python process
     def stop(self):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -62,5 +57,11 @@ class Client:
             print(err)
             # close the connection
         stdin.close()
+
+    #restart the client
+    def restart(self):
+        print("restart client")
+        self.stop()
+        self.start()
 
 

@@ -3,10 +3,19 @@ from flask import Flask, render_template, Response
 import cv2
 import time
 from client_init import Client
-import threading
+from datetime import  datetime
+import os
 import sys
 
 app = Flask(__name__)
+#Initialize the camera client
+
+
+client_list = [Client("192.168.0.172"), Client("192.168.0.145"), Client("192.168.0.144")]
+for client in client_list:
+    client.stop()
+    client.start()
+
 @app.route('/')
 def index():
     """Video streaming home page."""
@@ -49,18 +58,17 @@ def video_feed(device):
                         mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
+@app.route('/get_start_time/<device>')
+def get_start_time(device):
+    client = client_list[device]
+    print(datetime.now() - client.start_time)
+    start_time = datetime.now() - client.start_time
+    return start_time
+
+
 if __name__ == '__main__':
     try:
-        #Initialize the camera client
-        client1 = Client("192.168.0.172")
-        client1.stop()
-        client1.start()
-        client2 = Client("192.168.0.145")
-        client2.stop()
-        client2.start()
-        client3 = Client("192.168.0.144")
-        client3.stop()
-        client3.start()
+
         app.run(host='0.0.0.0', threaded=True)
     except KeyboardInterrupt:
         print("interrupt exit with key")

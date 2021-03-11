@@ -3,29 +3,45 @@ import threading
 from io import BytesIO
 import telegram
 
+from threading import Thread
+
+#Define the chat id and bot token
+token = '1546815383:AAGf-drVoek0FmaGsOtFHkZT0-3li6ojHRc'
+chat_id = '-556671391'
+
+#Define the sending text function
+def telegram_bot_sendText(message):
+    bot = telegram.Bot(token)
+    message += "\n Click <a href='http://192.168.0.143:5000'>here</a> to access the details"
+    bot.send_message(chat_id=chat_id, text=message,
+                     parse_mode=telegram.ParseMode.HTML)
+
+
+
+
+
+#Define the sending photo function
+def telegram_bot_sendImage(image):
+    bot = telegram.Bot(token)
+    bot.send_photo(chat_id, photo=open(image, "rb"))
+
+
 
 class RPI_Notifier:
 
     def __init__(self):
         self
 
-    @staticmethod
-    def telegram_bot_sendText(message):
-        token = '1546815383:AAGf-drVoek0FmaGsOtFHkZT0-3li6ojHRc'
-        chatID = '-556671391'
-        send_text = 'https://api.telegram.org/bot' + token + '/sendMessage?chat_id=' + chatID + '&parse_mode=Markdown&text=' + message
+    #Send notification to the phone telegram
+    def send_message(self, message, image):
+        thr = Thread(target=telegram_bot_sendText, args=[message])
+        thr.start()
+        thr.join()
 
-        response = requests.get(send_text)
-
-        return response.json()
-
-    @staticmethod
-    def telegram_bot_sendImage(image):
-        token = '1546815383:AAGf-drVoek0FmaGsOtFHkZT0-3li6ojHRc'
-        chatID = '-556671391'
-
-        bot = telegram.Bot(token)
-        bot.send_photo(chatID, photo=open(image, "rb"))
+        thr2 = Thread(target=telegram_bot_sendImage, args=[image])
+        thr2.start()
+        thr2.join()
+        return "OK"
 
 
 if __name__ == '__main__':
