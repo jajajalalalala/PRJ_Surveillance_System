@@ -1,7 +1,7 @@
 import paramiko
-import csv
 from datetime import  datetime
-#Class to start a server
+#
+
 class Client:
     password = 'pi'
     username = 'pi'
@@ -30,24 +30,25 @@ class Client:
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         client.connect(hostname=self.hostname, username=self.username, password=self.password)
+        # The  directory of the  bash file is located under the directory of the raspberry pi
         client.exec_command('/home/pi/PRJ/Client/client.sh')
         # close the connection
         client.close()
 
 
 
-    # Stop an camera by killing the python process
+    # Stop an camera by killing the python process.
+
     def stop(self):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         client.connect(hostname=self.hostname, username=self.username, password=self.password)
         print ("stop client")
 
-        #Host name on 192.168.0.172 is running on python 3
-        if(self.hostname == '192.168.0.172'):
-            stdin, stdout, stderr = client.exec_command('pgrep -o -x python3')
-        else:
-            stdin, stdout, stderr = client.exec_command('pgrep -o -x python')
+        # Grep the pid of python3 task running on the raspberry Pi
+
+        stdin, stdout, stderr = client.exec_command('pgrep -o -x python3')
+        # Collect the PID and kill it
         pid = stdout.read().decode("utf-8")
         stdin, stdout, stderr = client.exec_command('kill ' + format(pid))
 
@@ -58,7 +59,7 @@ class Client:
             # close the connection
         stdin.close()
 
-    #restart the client
+    #restart the client by firstly stop the raspberry Pi and restart it.
     def restart(self):
         print("restart client")
         self.stop()

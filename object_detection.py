@@ -3,32 +3,28 @@ from tensorflow.lite.python.interpreter import Interpreter
 import os
 import cv2
 
-
-# This is to detect the human
+# Inspired by
+#https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi
+#This is the class to detect the human
 class Human_Detector:
 
     def __init__(self):
-        self.MODEL = 'models/tensorflow_models'
-        self.LABEL = 'models/tensorflow_models/labelmap.txt'
 
-        self.min_conf_threshold = 0.6
-
+        #  Define the threshold of the classifier
+        self.min_threshold = 0.6
+        # Configure image width and height
         self.imW, self.imH = 300, 300
-        # Get path to current working directory
-        self.CWD_PATH = os.getcwd()
 
-        # Path to .tflite file, which contains the model that is used for object detection
-        self.PATH_TO_CKPT = os.path.join(self.CWD_PATH, self.MODEL, 'detect.tflite')
+        # Load the label map from the directory
+        label_file = 'models/tensorflow_models/labelmap.txt'
+        self.label_list = []
+        with open(label_file, 'r') as label_map:
+            for i in label_map.read().split("\n"):
+                self.label_list.append(i)
 
-        # Path to label map file
-        PATH_TO_LABELS = os.path.join(self.CWD_PATH, self.MODEL, self.LABEL)
 
-        # Load the label map
-        with open(self.LABEL, 'r') as f:
-            self.labels = [line.strip() for line in f.readlines()]
-
-        # Load the Tensorflow Lite model.
-        self.interpreter = Interpreter(model_path=self.PATH_TO_CKPT)
+        # Load the tensorflow models
+        self.interpreter = Interpreter(model_path='models/tensorflow_models/detect.tflite')
         self.interpreter.allocate_tensors()
 
         # Get model details
@@ -37,8 +33,9 @@ class Human_Detector:
         self.height = self.input_details[0]['shape'][1]
         self.width = self.input_details[0]['shape'][2]
 
-        floating_model = (self.input_details[0]['dtype'] == np.float32)
 
+
+    # The method to detect the person
     def detect(self, frame):
         # Tensorflow model
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
@@ -48,11 +45,10 @@ class Human_Detector:
         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
         self.interpreter.invoke()
 
-        # Retrieve detection results
-        boxes = self.interpreter.get_tensor(self.output_details[0]['index'])[
-            0]  # Bounding box coordinates of detected objects
-        classes = self.interpreter.get_tensor(self.output_details[1]['index'])[0]  # Class index of detected objects
-        scores = self.interpreter.get_tensor(self.output_details[2]['index'])[0]  # Confidence of detected objects
+        # get the detection results
+
+        classes = self.interpreter.get_tensor(self.output_details[1]['index'])[0]  # get the index of detect object
+        scores = self.interpreter.get_tensor(self.output_details[2]['index'])[0]  # the score of this classification
 
         # Perform the actual detection by running the model with the image as input
         self.interpreter.set_tensor(self.input_details[0]['index'], input_data)
@@ -62,29 +58,27 @@ class Human_Detector:
         # Tensorflow motion detection
         # Loop over all detections and draw detection box if confidence is above minimum threshold
         for i in range(len(scores)):
-            if (scores[i] > self.min_conf_threshold) and (scores[i] <= 1.0):
-                object_name = self.labels[
+            if (scores[i] > self.min_threshold) and (scores[i] <= 1.0):
+                object_name = self.label_list[
                     int(classes[i])]  # Look up object name from "labels" array using class index
-
-                label = '%s: %d%%' % (object_name, int(scores[i] * 100))  # Example: 'person: 72%'
+                # Define the model name
+                label = '%s: %d%%' % (object_name, int(scores[i] * 100))
+                # If the objectt equals human, the count + 1
                 if object_name == 'person':
                     human_count += 1
-                    # Get bounding box coordinates and draw box Interpreter can return coordinates that are outside
-                    # of image dimensions, need to force them to be within image using max() and min()
-                    ymin = int(max(1, (boxes[i][0] * self.imH)))
-                    xmin = int(max(1, (boxes[i][1] * self.imW)))
-                    ymax = int(min(self.imH, (boxes[i][2] * self.imH)))
-                    xmax = int(min(self.imW, (boxes[i][3] * self.imW)))
+                    rectangle = self.interpreter.get_tensor(self.output_details[0]['index'])[
+                        0]  # get the box around this obejct
+                    # Define the position of the box
+                    ymin = int(max(1, (rectangle[i][0] * self.imH)))
+                    xmin = int(max(1, (rectangle[i][1] * self.imW)))
+                    ymax = int(min(self.imH, (rectangle[i][2] * self.imH)))
+                    xmax = int(min(self.imW, (rectangle[i][3] * self.imW)))
 
                     cv2.rectangle(frame, (xmin, ymin), (xmax, ymax), (10, 255, 0), 1)
-
-                    # Draw label
-
-                    labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)  # Get font size
-                    label_ymin = max(ymin,
-                                     labelSize[1] + 10)  # Make sure not to draw label too close to top of window
-
-                    cv2.putText(frame, label, (xmin, label_ymin - 7), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (10, 255, 0),
+                    labelSize, baseLine = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, 0.7, 2)
+                    label_ymin = max(ymin, labelSize[1] + 10)  # Make sure not to draw label too close to top of window
+                    # Draw label on the frame
+                    cv2.putText(frame, label, (xmin, label_ymin-5), cv2.FONT_HERSHEY_SIMPLEX, 0.4, (0, 255, 0),
                                 1)  # Draw label text
 
         return frame, human_count

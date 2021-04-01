@@ -1,3 +1,7 @@
+# Based on the project from the following project
+# https://github.com/LeonLok/Multi-Camera-Live-Object-Tracking
+
+
 import time
 import threading
 import imagezmq
@@ -82,7 +86,10 @@ class BaseCamera:
 
     @classmethod
     def get_frame(cls, device):
-        """Return the current camera frame."""
+        """
+        Return the current camera frame of a camera.
+        :param device: the camera id
+        """
         BaseCamera.last_access[device] = time.time()
 
         # wait for a signal from the camera thread
@@ -92,19 +99,23 @@ class BaseCamera:
 
 
     @classmethod
-    def server_thread(cls, device, port):
+    def frame_thread(cls, device, port):
+        """
+        This defines the stream of a camera and keep updating the latest frame.
+        If the server doesn't receive a new frame from a camera or the camera is not responding, it will throw an error and restart the camera.
 
-        image_hub = imagezmq.ImageHub(open_port='tcp://*:{}'.format(port))
+        :param device: the camera id
+        :param port: the port the camera client is connected with
 
+        """
+        image_hub = imagezmq.ImageHub(open_port='tcp://*:{}'.format(port)) # Get the imagehub from a specific port
         frames_iterator = cls.server_frames(image_hub)
-
         switcher = {
             "cam1": "192.168.0.172",
             "cam2": "192.168.0.145",
             "cam3": "192.168.0.144"
 
         }
-
         try:
             for cam_id, frame in frames_iterator:
                 #set the current frame
@@ -116,35 +127,29 @@ class BaseCamera:
                 if time.time() - BaseCamera.last_access[device] > 10:
                     ip = switcher.get(cam_id, "Invalid IP")
 
-                    frames_iterator.close()
-                    image_hub.zmq_socket.close()
-                    print('Closing server socket at port {}.'.format(port))
-
-                    notifier.telegram_bot_sendText("Camera {} is down, please check the camera.".format(cam_id))
-                    #When Camera is invalid, restart the camera
+                    notifier.telegram_bot_send_text("Camera {} is down, please check the camera.".format(cam_id))
+                    # When the frame in can  camera cannot get updated within 10 seconds, a notification will be sent.
                     client = Client(ip)
                     client.restart()
                     # Notify the user restart the camera
-                    notifier.telegram_bot_sendText("Camera {} has restarted.".format(cam_id))
+                    notifier.telegram_bot_send_text("Camera {} has restarted.".format(cam_id))
                     print('Restarting server thread for device {} due to inactivity.'.format(device))
                     pass
+        # For any other exception
         except Exception as e:
-
-            frames_iterator.close()
-            image_hub.zmq_socket.close()
-            notifier.telegram_bot_sendText("Camera is down, please check the camera ")
-
-            notifier.telegram_bot_sendText("Camera has started.")
+            # When we there is a exception, a notification message will send and the  camera will  restart.
+            notifier.telegram_bot_send_text("Camera is down, please check the camera ")
+            notifier.telegram_bot_send_text("Camera has started.")
             print('Closing server socket at port {}.'.format(port))
             print('Stopping server thread for device {} due to error.'.format(device))
-            print(e)
+
 
     @classmethod
     #A class method indicates a thread
     def _thread(cls, device, port_list):
         port = port_list[int(device)]
         print('Starting server thread for device {} at port {}.'.format(device, port))
-        cls.server_thread(device, port)
+        cls.frame_thread(device, port)
 
 
         BaseCamera.threads[device] = None

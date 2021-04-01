@@ -117,14 +117,8 @@ li{
   <!-- First Camera -->
   <div class="img-container" >
         <p class="sub_header">Camera 1</p>
-        <img onclick="imgbig(1);" src="{{ url_for('video_feed', device=0) }}" class="center" style="border:1px solid #444444;width:100%" alt="Camera Stream 1" id="imgsrc1">
-{#        <div>#}
-{#           <ul>#}
-{#               <li ><p href="{{ url_for('index.get_start_time', device=0 )}}"></p></li>#}
-{#               <li>Number of motion detected: </li>#}
-{#               <li>Notification sent: </li>#}
-{#           </ul>#}
-{#        </div>#}
+        <img onclick="imgbig(1);" src="{{ url_for('video', device=0) }}" class="center" style="border:1px solid #444444;width:100%" alt="Camera Stream 1" id="imgsrc1">
+
   </div>
   <div id="bigimg" onclick="closeimg();"></div>
 
@@ -132,7 +126,7 @@ li{
   <!-- Second Camera -->
   <div class="img-container" >
         <p class="sub_header">Camera 2</p>
-        <img onclick="imgbig(2);" src="{{ url_for('video_feed', device=2) }}" class="center" style="border:1px solid #444444;width:100%" alt="Camera Stream 2" id="imgsrc2">
+        <img onclick="imgbig(2);" src="{{ url_for('video', device=2) }}" class="center" style="border:1px solid #444444;width:100%" alt="Camera Stream 2" id="imgsrc2">
   </div>
     <div id="bigimg" onclick="closeimg();"></div>
 
@@ -140,7 +134,7 @@ li{
   <!-- Third Camera -->
   <div class="img-container" >
         <p class="sub_header">Camera 3</p>
-        <img onclick="imgbig(3);" src="{{ url_for('video_feed', device=1) }}" class="center" style="border:1px solid #444444;width:100%" alt="Camera Stream 3" id="imgsrc3">
+        <img onclick="imgbig(3);" src="{{ url_for('video', device=1) }}" class="center" style="border:1px solid #444444;width:100%" alt="Camera Stream 3" id="imgsrc3">
   </div>
     <div id="bigimg" onclick="closeimg();"></div>
 
@@ -167,6 +161,7 @@ li{
 
 </div>
 </body>
+
 <!-- JS -->
 <script src="https://www.jq22.com/jquery/jquery-3.3.1.js"></script>
 <script>
