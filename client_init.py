@@ -1,8 +1,19 @@
+######## A home Surveillance system - Client initiator #########
+#
+# Author: Bonian Hu
+# Date: 2021/04/08
+# Description: This module defines the client initialtor, it uses paramiko library to
+# remotely execute the script on the client side.
+# This allows server to remotely start the server to start, stop, restart the client.
+
+
+
 import paramiko
 from datetime import  datetime
 #
 
 class Client:
+
     password = 'pi'
     username = 'pi'
     hostname = ''
@@ -38,7 +49,6 @@ class Client:
 
 
     # Stop an camera by killing the python process.
-
     def stop(self):
         client = paramiko.SSHClient()
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())

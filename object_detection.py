@@ -1,17 +1,34 @@
+######## A home Surveillance system - Human Classification module #########
+#
+# Author: Bonian Hu
+# Date: 2021/04/08
+# Description:
+# This class use the Tensorflow object detection model to classify the image in a frame.
+# It accepts a frame from the image hub if the frame satisfies the requirement and send the
+# frame with drawed boxes back to the server
+#
+# This code is based off and improved from the TensorFlow Lite image classification example at:
+# https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi/blob/master/TFLite_detection_stream.py
+#
+# I added my own script logic to let the system only detect human object. It will return a classified object to the server.
+
+
 import numpy as np
 from tensorflow.lite.python.interpreter import Interpreter
 import os
 import cv2
 
-# Inspired by
-#https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi
-#This is the class to detect the human
+
+
+
+
+# This is the class to detect the human
 class Human_Detector:
 
     def __init__(self):
 
         #  Define the threshold of the classifier
-        self.min_threshold = 0.6
+        self.min_threshold = 0.65
         # Configure image width and height
         self.imW, self.imH = 300, 300
 
@@ -35,7 +52,7 @@ class Human_Detector:
 
 
 
-    # The method to detect the person
+    # Human detection method
     def detect(self, frame):
         # Tensorflow model
         frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)

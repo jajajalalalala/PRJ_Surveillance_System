@@ -1,17 +1,28 @@
-# Based on the project
+######## A home Surveillance system - Base Camera module#########
+#
+# Author: Bonian Hu
+# Date: 2021/04/08
+# Description:
+# BaseCamera inheritates from Camera class, it has all the feature from Camera object.
+# But it specifictly defines the way to process the frame and the logic of sending notifications.
+
+# This code is based and improved from the following example.
 # https://github.com/LeonLok/Multi-Camera-Live-Object-Tracking
+# I implemented notifier with cooling feature, the way of implementing different motion detection algorithm
+# the human classifier.∂
+
 
 from base_camera import BaseCamera
-import time
+from datetime import datetime
 import cv2
 from lib_vibe.py_vibe import ViBe  #Library import from https://github.com/232525/ViBe.Cython.git
 from notifier import RPI_Notifier
 import time, threading
 from PIL import Image
 from object_detection import Human_Detector
-import os
-
 from database import Database
+import timeit
+
 
 isAvailable = [True, True, True]
 
@@ -34,7 +45,7 @@ class Camera(BaseCamera):
 
         num_frames = 0
         # Initialize the databese to store the record
-        db = Database()
+        # db = Database()  # For data test
         # Let a availability thread sleep for 5 minutes before sending the next frame
         def changeAvailability(index):
             """
@@ -70,12 +81,12 @@ class Camera(BaseCamera):
                 cooler(cam_index)
                 Image.fromarray(frame).save("input/frame.jpg")
                 notifier.send_message("motion detected on camera {}".format(id), "input/frame.jpg")
-                db.save_data(cam_id, time.strftime('%Y%m%d%h %H:%M'))  # Save this record to the database
+                # db.save_data(cam_id, time.strftime('%Y%m%d%h %H:%M'))  # For motion detection processing speed test
 
 
 
 
-        # # Initialize the Vibe Algorithm and collect the first image
+        # Initialize the Vibe Algorithm and collect the first image
         vibe = ViBe()
         cam_id, frame = image_hub.recv_image() #Get the recent image from image_hub
         image_hub.send_reply(b'OK')
@@ -86,9 +97,9 @@ class Camera(BaseCamera):
 
 
         # Image difference motion detection
-        # cam_id, old_frame = image_hub.recv_image()
-        # image_hub.send_reply(b'OK')
-        # new_frame = old_frame
+        cam_id, old_frame = image_hub.recv_image()
+        image_hub.send_reply(b'OK')
+
 
 
         num_frames += 1
@@ -105,9 +116,12 @@ class Camera(BaseCamera):
 
 
         while True:  # main loop
+
             cam_id, frame = image_hub.recv_image()
             image_hub.send_reply(b'OK')
 
+            # Check processing time per frame
+            #Learned from https://www.youtube.com/watch?v=MkcUgPhOlP8
             #############################
             # Frame Difference Algorithm
             #############################
@@ -122,7 +136,6 @@ class Camera(BaseCamera):
             # _, threshold = cv2.threshold(frame_blur, 20, 255, cv2.THRESH_BINARY)
             # frame_dilated = cv2.dilate(threshold, None, iterations=3)
             # frame_contours, _ = cv2.findContours(frame_dilated, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            # # Calculate the area of contours, if smaller than threshold, continue
             #
             # #Calculate the total contour area
             #
@@ -137,26 +150,26 @@ class Camera(BaseCamera):
             #         if object_count > 2:
             #             object_count = 0
             #             if time.time() - check_point < 1:
-
+            #
             #                 send_notification(cam_id, frame)
             #             check_point = time.time()
             #
-            # print(frame_contours)
-            #
             # frame = frame_dilated
-            # num_frames += 1
             # old_frame = new_frame
-
+            # num_frames += 1
 
 
             #############################
             # Normal Vibe algorithm
             #############################
-
             # gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            # if num_frames == 0:
+            #     vibe.AllocInit(gray)
+            #
             # segmentation_map = vibe.Segmentation(gray)
             # vibe.Update(gray, segmentation_map)
-            # #Define the threshold for pure vibe
+            #
+            # # Define the threshold for pure vibe
             # vibe_sum = sum([sum(i) for i in segmentation_map]) / 10000
             #
             # cam_index = int(cam_id[-1]) - 1
@@ -208,7 +221,7 @@ class Camera(BaseCamera):
 
 
             # detect then motion is greater than the threshold 100
-            elif vibe_sum > 15:
+            elif vibe_sum > 100:
                 # If the contour area is greater than threashold, do the classification
                 frame, count = human_detector.detect(frame)
                 object_count += count
@@ -218,9 +231,20 @@ class Camera(BaseCamera):
                     if time.time() - check_point < 1:
                         send_notification(cam_id, frame)  # Send the frame to telegram
                     check_point = time.time()
-            print(vibe_sum)
-            frame = segmentation_map
+
+
             num_frames += 1
+
+
+            # Frame processing time
+
+            # stop = timeit.default_timer()
+            # if(cam_id == 'cam3'):
+            #     now = datetime.now()
+            #
+            #     db.save_data(now.strftime("%H:%M:%S"),  1 /(time.time() - start_time))
+
+
             yield cam_id, frame
 
 

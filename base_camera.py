@@ -1,5 +1,15 @@
-# Based on the project from the following project
+######## A home Surveillance system - Base Camera module#########
+#
+# Author: Bonian Hu
+# Date: 2021/04/08
+# Description:
+# This class defines the basic features of a camera. It keeps receiving camera from the image hub
+# then be able to return the latest frame.
+
+# This code is based and improved from the following example.
 # https://github.com/LeonLok/Multi-Camera-Live-Object-Tracking
+# I added the feature of automatically restarting the client when it is not responding
+# Also adds the notification feature when the client fails.
 
 
 import time
@@ -15,10 +25,10 @@ except ImportError:
     except ImportError:
         from _thread import get_ident
 
-
 class CameraEvent:
     """An Event-like class that signals all active clients when a new frame is
     available.
+    # Ref: https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi
     """
     def __init__(self):
         self.events = {}
@@ -57,12 +67,15 @@ class CameraEvent:
         """Invoked from each client's thread after a frame was processed."""
         self.events[get_ident()][0].clear()
 
-
 class BaseCamera:
+    """
+    This class defines a base camera
+
+    Improved from: https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi
+    """
     threads = {}  # background thread that reads frames from camera
     frame = {}  # current frame is stored here by background thread
     last_access = {}  # time of last client access to the camera
-    first_frame = None
     event = {}
 
     def __init__(self, device, port_list):
@@ -89,6 +102,7 @@ class BaseCamera:
         """
         Return the current camera frame of a camera.
         :param device: the camera id
+        # Ref: https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi
         """
         BaseCamera.last_access[device] = time.time()
 
@@ -106,6 +120,7 @@ class BaseCamera:
 
         :param device: the camera id
         :param port: the port the camera client is connected with
+        Improved from: https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi
 
         """
         image_hub = imagezmq.ImageHub(open_port='tcp://*:{}'.format(port)) # Get the imagehub from a specific port
@@ -123,7 +138,7 @@ class BaseCamera:
                 BaseCamera.event[device].set()  # send signal to clients
                 time.sleep(0)
 
-                #If we don't get frame for 10 seconds, then close the connection
+                #My Own Implementation: f we don't get frame for 10 seconds, then close the connection
                 if time.time() - BaseCamera.last_access[device] > 10:
                     ip = switcher.get(cam_id, "Invalid IP")
 
@@ -137,7 +152,8 @@ class BaseCamera:
                     pass
         # For any other exception
         except Exception as e:
-            # When we there is a exception, a notification message will send and the  camera will  restart.
+
+            # My Own Implementation: When we there is a exception, a notification message will send and the  camera will  restart.
             notifier.telegram_bot_send_text("Camera is down, please check the camera ")
             notifier.telegram_bot_send_text("Camera has started.")
             print('Closing server socket at port {}.'.format(port))
@@ -145,11 +161,10 @@ class BaseCamera:
 
 
     @classmethod
-    #A class method indicates a thread
+    # A method that packs a base camera object as a thread.
+    # Ref: https://github.com/EdjeElectronics/TensorFlow-Lite-Object-Detection-on-Android-and-Raspberry-Pi
     def _thread(cls, device, port_list):
         port = port_list[int(device)]
         print('Starting server thread for device {} at port {}.'.format(device, port))
         cls.frame_thread(device, port)
-
-
         BaseCamera.threads[device] = None
