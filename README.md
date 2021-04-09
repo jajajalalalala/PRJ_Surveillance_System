@@ -32,24 +32,34 @@ It is recommonded to run it within a independent environment for both client and
 ## Server Setup:
 
 
+- Set the client ip address in `app.py`.
+```
+client_list = [Client("<Client_1_IP>"), Client("<Client2_IP>"), Client("<Client_3_IP>")]
+```
 
-## Documentation 
-- Receiving joystick input ==> [this link](https://www.pygame.org/docs/ref/joystick.html?highlight=joystick)
-- Simulate keyboard input ==> [this link](https://pypi.org/project/pynput/)
+- Set the client ip address in `client_init.py` and `base_camera.py`.
+```
+switcher = {
+            "cam1": "<Client_1_IP>",
+            "cam2": "<Client_2_IP>",
+            "cam3": "<Client_3_IP>"
 
-## Usage 
-```python  raspberry_gamepad_interface.py  ```
+        }
+```
 
-## Futher Modification
-It is possible that you modify the behaviour of each joystick input by modifing the event handlder in the code 
-```python 
-
-
-def AxisEventHandler(self, axis, degree)
-    #define your action 
-    
-def ArrowButtonEventHandler(self,button)
-    #define your action 
-
+- Configure the remote directory of `client.sh` in the `start` method in `client_init.py`.
 
 ```
+client.exec_command('/<remote_directory>/client.sh')
+```
+- Configure the telegram bot token and chat id in `notifier.py`.
+```
+token = '1546815383:AAGf-drVoek0FmaGsOtFHkZT0-3li6ojHRc'
+chat_id = '-556671391'
+```
+
+## Usage 
+```python3 app.py```
+
+## Futher Modification
+You can to change the motion detection algorithm by specify the algorithm in `camera_server.py`.
