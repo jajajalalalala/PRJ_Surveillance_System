@@ -121,6 +121,8 @@ class Camera(BaseCamera):
             image_hub.send_reply(b'OK')
 
             # Check processing time per frame
+
+
             #Learned from https://www.youtube.com/watch?v=MkcUgPhOlP8
             #############################
             # Frame Difference Algorithm
@@ -234,17 +236,6 @@ class Camera(BaseCamera):
 
 
             num_frames += 1
-
-
-            # Frame processing time
-
-            # stop = timeit.default_timer()
-            # if(cam_id == 'cam3'):
-            #     now = datetime.now()
-            #
-            #     db.save_data(now.strftime("%H:%M:%S"),  1 /(time.time() - start_time))
-
-
             yield cam_id, frame
 
 
